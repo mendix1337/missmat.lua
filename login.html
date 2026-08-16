@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Вход — missmat</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700;900&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root { --bg:#06080b; --card:#10161d; --border:rgba(255,255,255,.08); --text:#eef3f7; --muted:#8a97a5; --accent:#00ff85; --accent2:#00d4ff; --danger:#ff5d7a; }
+* { margin:0; padding:0; box-sizing:border-box; }
+body { background:var(--bg); color:var(--text); min-height:100vh; font-family:'Inter',system-ui,sans-serif; display:grid; place-items:center; padding:24px; position:relative; }
+body::before { content:""; position:fixed; inset:0; z-index:-1; background:radial-gradient(ellipse 70% 50% at 50% -10%,rgba(0,255,133,.12),transparent),radial-gradient(ellipse 50% 40% at 0% 110%,rgba(177,140,255,.07),transparent); }
+.card { width:100%; max-width:420px; background:linear-gradient(165deg,rgba(255,255,255,.05),rgba(255,255,255,.015)); border:1px solid var(--border); border-radius:20px; padding:40px 36px; box-shadow:0 25px 70px rgba(0,0,0,.5); animation:up .6s ease both; }
+@keyframes up { from{opacity:0;transform:translateY(24px)} to{opacity:1;transform:none} }
+.logo { display:flex; align-items:center; gap:12px; justify-content:center; margin-bottom:8px; text-decoration:none; color:var(--text); }
+.logo-mark { width:40px; height:40px; border-radius:12px; display:grid; place-items:center; font-weight:900; font-family:'Unbounded',sans-serif; background:linear-gradient(135deg,var(--accent),var(--accent2)); color:#04110a; box-shadow:0 0 24px rgba(0,255,133,.35); }
+.logo-name { font-family:'Unbounded',sans-serif; font-weight:700; font-size:17px; }
+h1 { text-align:center; font-family:'Unbounded',sans-serif; font-size:22px; font-weight:700; margin:22px 0 6px; }
+.sub { text-align:center; color:var(--muted); font-size:14px; margin-bottom:26px; }
+.alert { border-radius:12px; padding:12px 16px; font-size:13.5px; margin-bottom:20px; display:none; }
+.alert.error { background:rgba(255,93,122,.12); border:1px solid rgba(255,93,122,.35); color:#ff9db1; }
+.alert.success { background:rgba(0,255,133,.1); border:1px solid rgba(0,255,133,.35); color:#7dffbe; }
+label { display:block; font-size:13px; color:var(--muted); margin:16px 0 7px; font-weight:600; }
+input[type=text],input[type=password] { width:100%; background:rgba(255,255,255,.04); color:var(--text); border:1px solid var(--border); border-radius:12px; padding:13px 16px; font-size:15px; outline:none; transition:border-color .2s,box-shadow .2s; }
+input:focus { border-color:var(--accent); box-shadow:0 0 0 3px rgba(0,255,133,.12); }
+.btn { width:100%; border:none; cursor:pointer; border-radius:12px; padding:15px; font-size:15px; font-weight:700; margin-top:22px; background:linear-gradient(90deg,var(--accent),var(--accent2)); color:#04110a; transition:transform .15s,box-shadow .2s; box-shadow:0 8px 26px rgba(0,255,133,.25); }
+.btn:hover { transform:translateY(-2px); box-shadow:0 12px 36px rgba(0,255,133,.4); }
+.btn:disabled { opacity:.5; cursor:wait; }
+.link { text-align:center; margin-top:20px; font-size:14px; color:var(--muted); }
+.link a { color:var(--accent); text-decoration:none; font-weight:600; }
+.link a:hover { text-decoration:underline; }
+</style>
+</head>
+<body>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase-config.js"></script>
+<script src="missmat-core.js"></script>
+
+<div class="card">
+    <a class="logo" href="index.html">
+        <div class="logo-mark">m</div>
+        <div class="logo-name">missmat</div>
+    </a>
+    <h1>Вход</h1>
+    <p class="sub">Войдите в личный кабинет</p>
+
+    <div class="alert" id="alert"></div>
+
+    <form id="login-form">
+        <label>Никнейм или email</label>
+        <input type="text" name="login" required autocomplete="username">
+        <label>Пароль</label>
+        <input type="password" name="password" required autocomplete="current-password">
+        <button class="btn" type="submit" id="btn">Войти</button>
+    </form>
+
+    <p class="link">Нет аккаунта? <a href="register.html">Зарегистрироваться</a></p>
+</div>
+
+<script>
+function showAlert(msg, type) {
+    const el = document.getElementById('alert');
+    el.className = 'alert ' + type;
+    el.style.display = 'block';
+    el.textContent = msg;
+}
+
+document.getElementById('login-form').addEventListener('submit', async function (e) {
+    e.preventDefault();
+    const btn = document.getElementById('btn');
+    btn.disabled = true; btn.textContent = 'Проверка…';
+
+    const fd = new FormData(this);
+    const login = (fd.get('login') || '').trim();
+    const password = fd.get('password') || '';
+
+    try {
+        const client = await sb();
+
+        // поиск юзера по нику или email
+        const { data: users, error } = await client
+            .from('profiles')
+            .select('*')
+            .or('username.eq.' + login + ',email.eq.' + login);
+        if (error) throw error;
+
+        if (!users || users.length === 0) return showAlert('Неверный логин или пароль.', 'error');
+        const u = users[0];
+
+        const hash = await sha(password);
+        if (u.password_hash !== hash) return showAlert('Неверный логин или пароль.', 'error');
+
+        if (u.banned === 1) return showAlert('Ваш аккаунт заблокирован. Обратитесь в Discord.', 'error');
+        if (u.muted === 1) return showAlert('Ваш аккаунт muted. Обратитесь в Discord.', 'error');
+
+        localStorage.setItem('mm_session', u.username);
+        location.href = 'account.html';
+    } catch (err) {
+        showAlert('Ошибка: ' + (err.message || err), 'error');
+    } finally {
+        btn.disabled = false; btn.textContent = 'Войти';
+    }
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Админ-панель — missmat</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700;900&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root { --bg:#06080b; --card:#10161d; --border:rgba(255,255,255,.08); --text:#eef3f7; --muted:#8a97a5; --accent:#00ff85; --accent2:#00d4ff; --discord:#5865f2; --danger:#ff5d7a; --warn:#ffc94d; }
+* { margin:0; padding:0; box-sizing:border-box; }
+body { background:var(--bg); color:var(--text); min-height:100vh; font-family:'Inter',system-ui,sans-serif; padding:40px 20px; position:relative; }
+body::before { content:""; position:fixed; inset:0; z-index:-1; background:radial-gradient(ellipse 70% 50% at 50% -10%,rgba(0,255,133,.12),transparent),radial-gradient(ellipse 50% 40% at 100% 110%,rgba(0,212,255,.08),transparent); }
+.wrap { max-width:1080px; margin:0 auto; }
+.card { background:linear-gradient(165deg,rgba(255,255,255,.05),rgba(255,255,255,.015)); border:1px solid var(--border); border-radius:20px; padding:36px; box-shadow:0 25px 70px rgba(0,0,0,.5); margin-bottom:20px; animation:up .6s ease both; }
+@keyframes up { from{opacity:0;transform:translateY(24px)} to{opacity:1;transform:none} }
+.top { display:flex; align-items:center; justify-content:space-between; gap:16px; margin-bottom:26px; flex-wrap:wrap; }
+.logo { display:flex; align-items:center; gap:12px; text-decoration:none; color:var(--text); }
+.logo-mark { width:40px; height:40px; border-radius:12px; display:grid; place-items:center; font-weight:900; font-family:'Unbounded',sans-serif; background:linear-gradient(135deg,var(--accent),var(--accent2)); color:#04110a; box-shadow:0 0 24px rgba(0,255,133,.35); }
+.logo-name { font-family:'Unbounded',sans-serif; font-weight:700; font-size:17px; }
+h1 { font-family:'Unbounded',sans-serif; font-size:24px; font-weight:700; }
+.user-chip { color:var(--muted); font-size:14px; }
+.user-chip b { color:var(--accent); }
+.msg { border-radius:12px; padding:12px 16px; font-size:13.5px; margin-bottom:20px; display:none; }
+.msg.ok { background:rgba(0,255,133,.1); border:1px solid rgba(0,255,133,.35); color:#7dffbe; }
+.msg.err { background:rgba(255,93,122,.12); border:1px solid rgba(255,93,122,.35); color:#ff9db1; }
+.stats { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:14px; margin-bottom:24px; }
+.stat { background:rgba(255,255,255,.03); border:1px solid var(--border); border-radius:14px; padding:16px; text-align:center; }
+.stat b { display:block; font-size:24px; font-family:'Unbounded',sans-serif; color:var(--accent); }
+.stat span { color:var(--muted); font-size:12px; }
+.table-wrap { overflow-x:auto; }
+table { width:100%; border-collapse:collapse; min-width:800px; }
+th { text-align:left; color:var(--muted); font-size:12px; font-weight:600; text-transform:uppercase; letter-spacing:1px; padding:10px 12px; border-bottom:1px solid var(--border); }
+td { padding:12px; border-bottom:1px solid rgba(255,255,255,.04); font-size:14px; vertical-align:middle; }
+tr:hover td { background:rgba(255,255,255,.02); }
+.tag { display:inline-block; font-size:11px; font-weight:700; padding:3px 9px; border-radius:999px; }
+.tag.active { background:rgba(0,255,133,.12); color:#7dffbe; border:1px solid rgba(0,255,133,.3); }
+.tag.expired { background:rgba(255,93,122,.12); color:#ff9db1; border:1px solid rgba(255,93,122,.3); }
+.tag.banned { background:rgba(255,93,122,.2); color:#ff7d95; border:1px solid rgba(255,93,122,.5); }
+.tag.muted { background:rgba(255,201,77,.12); color:#ffda7d; border:1px solid rgba(255,201,77,.4); }
+.tag.none { background:rgba(255,255,255,.06); color:var(--muted); border:1px solid var(--border); }
+.btn { display:inline-flex; align-items:center; justify-content:center; gap:6px; border:none; cursor:pointer; border-radius:10px; padding:8px 14px; font-size:13px; font-weight:600; color:#fff; text-decoration:none; transition:transform .12s,filter .15s; }
+.btn:active { transform:scale(.96); }
+.btn-small { padding:6px 11px; font-size:12px; }
+.btn-ban { background:var(--danger); }
+.btn-unban { background:rgba(255,93,122,.15); color:#ff9db1; border:1px solid rgba(255,93,122,.4); }
+.btn-mute { background:var(--warn); color:#231a00; }
+.btn-unmute { background:rgba(255,201,77,.12); color:#ffda7d; border:1px solid rgba(255,201,77,.4); }
+.btn-revoke { background:var(--discord); }
+.btn-grant { background:var(--accent); color:#04110a; }
+.btn-outline { background:transparent; color:var(--muted); border:1px solid var(--border); }
+.btn-keys { background:linear-gradient(90deg,var(--accent),var(--accent2)); color:#04110a; }
+.actions { display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+.actions-out { display:flex; gap:12px; margin-top:20px; flex-wrap:wrap; }
+.empty { text-align:center; color:var(--muted); padding:40px 0; }
+.grant { display:flex; gap:6px; align-items:center; }
+.grant input { width:64px; background:rgba(255,255,255,.04); color:var(--text); border:1px solid var(--border); border-radius:8px; padding:6px 8px; font-size:12px; outline:none; }
+.grant input:focus { border-color:var(--accent); }
+.username-cell { font-weight:600; }
+.email-sub { color:var(--muted); font-size:12px; }
+.hint { color:var(--muted); font-size:13px; margin-top:14px; line-height:1.6; }
+.hint code { background:rgba(255,255,255,.07); padding:2px 7px; border-radius:6px; font-size:12px; color:var(--accent); }
+.genbar { display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-bottom:10px; }
+.genbar input { width:70px; background:rgba(255,255,255,.04); color:var(--text); border:1px solid var(--border); border-radius:8px; padding:8px 10px; font-size:13px; outline:none; }
+.genbar input:focus { border-color:var(--accent); }
+.keyslist { display:flex; flex-direction:column; gap:8px; }
+.keyrow { display:flex; align-items:center; justify-content:space-between; gap:12px; background:rgba(255,255,255,.03); border:1px solid var(--border); border-radius:10px; padding:10px 14px; flex-wrap:wrap; }
+.keyrow code { font-family:monospace; font-size:13px; color:var(--accent); }
+.keyrow .status { font-size:12px; color:var(--muted); }
+</style>
+</head>
+<body>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase-config.js"></script>
+<script src="missmat-core.js"></script>
+
+<div class="wrap">
+    <div class="card">
+        <div class="top">
+            <a class="logo" href="index.html"><div class="logo-mark">m</div><div class="logo-name">missmat · admin</div></a>
+            <div class="user-chip" id="chip"></div>
+        </div>
+
+        <h1>Админ-панель</h1>
+        <div class="msg" id="msg"></div>
+
+        <div class="stats" id="stats"></div>
+
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr><th>Юзер</th><th>Лицензия</th><th>Статус</th><th>Действия</th></tr>
+                </thead>
+                <tbody id="users-body"></tbody>
+            </table>
+        </div>
+
+        <h1 style="margin-top:34px;font-size:20px">Ключи активации</h1>
+        <div class="genbar">
+            <input type="number" id="key-days" value="30" min="1" max="365">
+            <span style="color:var(--muted);font-size:13px">дней на ключ</span>
+            <button class="btn btn-keys" onclick="genKey()">Сгенерировать ключ</button>
+            <button class="btn btn-keys" onclick="genKey(5)">×5</button>
+        </div>
+        <div class="keyslist" id="keys-list"><div class="empty">Загрузка…</div></div>
+
+        <div class="actions-out">
+            <a class="btn btn-outline" href="login.html" onclick="localStorage.removeItem('mm_session')">Выйти</a>
+            <a class="btn btn-revoke" href="https://discord.gg/BdUWVu4qHb" target="_blank" rel="noopener">💬 Discord</a>
+        </div>
+    </div>
+</div>
+
+<script>
+let client;
+
+function showMsg(text, ok) {
+    const m = document.getElementById('msg');
+    m.className = 'msg ' + (ok ? 'ok' : 'err');
+    m.style.display = 'block';
+    m.textContent = text;
+    clearTimeout(m._t);
+    m._t = setTimeout(() => m.style.display = 'none', 2500);
+}
+
+async function checkAdmin() {
+    const username = redirectIfNotLogged();
+    client = await sb();
+
+    const { data: me } = await client.from('profiles').select('*').eq('username', username).single();
+    // админ = тот самый аккаунт из ADMIN_USER. Проверяем через специальный признак.
+    if (!me) { localStorage.removeItem('mm_session'); location.href = 'login.html'; return null; }
+    const isAdmin = me.is_admin === 1;
+    if (!isAdmin) { location.href = 'login.html'; return null; }
+    document.getElementById('chip').innerHTML = 'Вы вошли как <b>' + me.username + '</b> · админ';
+    return me;
+}
+
+async function loadUsers() {
+    const { data: users, error } = await client.from('profiles').select('*').order('id', { ascending: false });
+    if (error) { showMsg('Ошибка загрузки: ' + error.message, false); return []; }
+    return users || [];
+}
+
+async function renderUsers() {
+    const users = await loadUsers();
+    const tbody = document.getElementById('users-body');
+    tbody.innerHTML = '';
+
+    let total = users.length, active = 0, banned = 0, muted = 0;
+    users.forEach(u => {
+        const end = Number(u.license_end || 0);
+        if (end > mscNow()) active++;
+        if (u.banned === 1) banned++;
+        if (u.muted === 1) muted++;
+    });
+    document.getElementById('stats').innerHTML =
+        '<div class="stat"><b>' + total + '</b><span>всего</span></div>' +
+        '<div class="stat"><b>' + active + '</b><span>активных</span></div>' +
+        '<div class="stat"><b>' + banned + '</b><span>забанено</span></div>' +
+        '<div class="stat"><b>' + muted + '</b><span>muted</span></div>';
+
+    if (users.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="4"><div class="empty">Пока нет юзеров</div></td></tr>';
+        return;
+    }
+
+    users.forEach(u => {
+        const tr = document.createElement('tr');
+        const end = Number(u.license_end || 0);
+        const isBanned = u.banned === 1;
+        const isMuted = u.muted === 1;
+        const isActive = end > 0 && end > mscNow();
+
+        let statHtml;
+        if (isBanned) statHtml = '<span class="tag banned">Забанен</span>';
+        else if (isMuted) statHtml = '<span class="tag muted">Muted</span>';
+        else if (isActive) statHtml = '<span class="tag active">Активна · ' + Math.floor((end - mscNow()) / 86400) + ' дн.</span>';
+        else if (end > 0) statHtml = '<span class="tag expired">Истекла</span>';
+        else statHtml = '<span class="tag none">Нет лицензии</span>';
+
+        tr.innerHTML =
+            '<td><div class="username-cell">' + (u.is_admin === 1 ? '👑 ' : '') + u.username + '</div></td>' +
+            '<td>' + (end > 0 ? end + '<div class="email-sub">' + (isActive ? 'до ' + new Date(end * 1000).toLocaleDateString('ru-RU') : 'истекла') + '</div>' : '—') + '</td>' +
+            '<td class="actions">' +
+            (isBanned
+                ? '<button class="btn btn-small btn-unban" onclick="setFlag(\'' + u.username + '\',\'banned\',0,\'Разбанен\')">Разбанить</button>'
+                : '<button class="btn btn-small btn-ban" onclick="setFlag(\'' + u.username + '\',\'banned\',1,\'Забанен\')">Бан</button>') +
+            (isMuted
+                ? '<button class="btn btn-small btn-unmute" onclick="setFlag(\'' + u.username + '\',\'muted\',0,\'Мут снят\')">Снять мут</button>'
+                : '<button class="btn btn-small btn-mute" onclick="setFlag(\'' + u.username + '\',\'muted\',1,\'Muted\')">Мут</button>') +
+            (end > 0
+                ? '<button class="btn btn-small btn-revoke" onclick="revokeKey(\'' + u.username + '\')">Забрать подписку</button>'
+                : '') +
+            '<span class="grant"><input type="number" value="30" min="1" max="365" id="days-' + u.username + '">' +
+            '<button class="btn btn-small btn-grant" onclick="grantKey(\'' + u.username + '\')">Выдать</button></span>' +
+            '</td>';
+        tbody.appendChild(tr);
+    });
+}
+
+async function setFlag(username, field, value, okMsg) {
+    const { error } = await client.from('profiles').update({ [field]: value }).eq('username', username);
+    if (error) { showMsg('Ошибка: ' + error.message, false); return; }
+    showMsg(okMsg + ': ' + username, true);
+    renderUsers();
+}
+
+async function revokeKey(username) {
+    const { error } = await client.from('profiles').update({ license_end: 0 }).eq('username', username);
+    if (error) { showMsg('Ошибка: ' + error.message, false); return; }
+    showMsg('Подписка забрана у ' + username, true);
+    renderUsers();
+}
+
+async function grantKey(username) {
+    const days = Math.max(1, Math.min(365, parseInt(document.getElementById('days-' + username).value, 10) || 30));
+    const end = mscNow() + days * 86400;
+    const { error } = await client.from('profiles').update({ license_end: end }).eq('username', username);
+    if (error) { showMsg('Ошибка: ' + error.message, false); return; }
+    showMsg('Юзеру ' + username + ' выдана подписка на ' + days + ' дн.', true);
+    renderUsers();
+}
+
+// ---------- ключи ----------
+async function genKey(count) {
+    count = count || 1;
+    const days = Math.max(1, Math.min(365, parseInt(document.getElementById('key-days').value, 10) || 30));
+    const rows = [];
+    for (let i = 0; i < count; i++) rows.push({ key: makeKeyCode(), days });
+    const { error } = await client.from('license_keys').insert(rows);
+    if (error) { showMsg('Ошибка генерации: ' + error.message, false); return; }
+    showMsg('Сгенерировано ' + count + ' ключ(а) на ' + days + ' дн.', true);
+    renderKeys();
+}
+
+async function renderKeys() {
+    const { data: keys, error } = await client.from('license_keys').select('*').order('id', { ascending: false }).limit(20);
+    const el = document.getElementById('keys-list');
+    if (error) { el.innerHTML = '<div class="empty">Ошибка загрузки ключей</div>'; return; }
+    if (!keys || keys.length === 0) { el.innerHTML = '<div class="empty">Ключей пока нет</div>'; return; }
+
+    el.innerHTML = keys.map(k =>
+        '<div class="keyrow"><code>' + k.key + '</code>' +
+        '<span class="status">' + k.days + ' дн. · ' +
+        (k.used_by && k.used_by !== '' ? 'использован: ' + k.used_by : 'свободен') + '</span></div>'
+    ).join('');
+}
+
+checkAdmin().then(me => {
+    if (me) { renderUsers(); renderKeys(); }
+});
+</script>
+</body>
+</html>

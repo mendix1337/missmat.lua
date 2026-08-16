@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>missmat — Lua скрипт для neverlose</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700;900&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+    --bg: #06080b;
+    --bg-soft: #0d1217;
+    --card: #10161d;
+    --border: rgba(255,255,255,.07);
+    --text: #eef3f7;
+    --muted: #8a97a5;
+    --accent: #00ff85;
+    --accent2: #00d4ff;
+    --accent3: #b18cff;
+    --discord: #5865f2;
+    --radius: 18px;
+    --shadow: 0 20px 60px rgba(0,0,0,.5);
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+}
+::selection { background: rgba(0,255,133,.25); }
+
+/* ================= BACKGROUND ================= */
+.bg { position: fixed; inset: 0; z-index: -2; overflow: hidden; }
+.bg::before {
+    content: ""; position: absolute; inset: 0;
+    background:
+        radial-gradient(ellipse 80% 50% at 50% -10%, rgba(0,255,133,.12), transparent),
+        radial-gradient(ellipse 60% 40% at 90% 110%, rgba(0,212,255,.08), transparent),
+        radial-gradient(ellipse 50% 40% at 0% 100%, rgba(177,140,255,.07), transparent);
+}
+.grid-overlay {
+    position: absolute; inset: 0;
+    background-image:
+        linear-gradient(rgba(255,255,255,.025) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,.025) 1px, transparent 1px);
+    background-size: 56px 56px;
+    mask-image: radial-gradient(ellipse 70% 60% at 50% 0%, black 30%, transparent 75%);
+    -webkit-mask-image: radial-gradient(ellipse 70% 60% at 50% 0%, black 30%, transparent 75%);
+}
+.orb { position: absolute; border-radius: 50%; filter: blur(90px); opacity: .25; animation: orbFloat 14s ease-in-out infinite; }
+.orb.o1 { width: 480px; height: 480px; background: var(--accent); top: -140px; left: -100px; }
+.orb.o2 { width: 420px; height: 420px; background: var(--accent2); bottom: -120px; right: -80px; animation-delay: -7s; }
+.orb.o3 { width: 300px; height: 300px; background: var(--accent3); top: 40%; left: 70%; animation-delay: -4s; opacity: .18; }
+@keyframes orbFloat { 0%,100% { transform: translate(0,0) scale(1) } 50% { transform: translate(50px,-40px) scale(1.12) } }
+
+/* ================= CONTAINER ================= */
+.container { max-width: 1160px; margin: 0 auto; padding: 0 24px; }
+
+/* ================= NAV ================= */
+nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px);
+    background: rgba(6,8,11,.6);
+    border-bottom: 1px solid var(--border);
+    animation: navIn .8s ease both;
+}
+@keyframes navIn { from { opacity: 0; transform: translateY(-20px) } to { opacity: 1; transform: none } }
+.nav-inner { display: flex; align-items: center; justify-content: space-between; height: 72px; }
+.logo { display: flex; align-items: center; gap: 12px; text-decoration: none; color: var(--text); }
+.logo-mark {
+    width: 36px; height: 36px; border-radius: 10px; display: grid; place-items: center;
+    font-weight: 900; font-family: 'Unbounded', sans-serif; font-size: 13px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    color: #04110a; box-shadow: 0 0 24px rgba(0,255,133,.35);
+}
+.logo-name { font-family: 'Unbounded', sans-serif; font-weight: 700; font-size: 15px; letter-spacing: .5px; }
+.logo-name span { color: var(--muted); font-weight: 500; }
+.nav-links { display: flex; align-items: center; gap: 32px; }
+.nav-links a { color: var(--muted); text-decoration: none; font-size: 14px; font-weight: 500; transition: color .2s; position: relative; }
+.nav-links a::after { content: ""; position: absolute; left: 0; bottom: -6px; width: 0; height: 2px; background: linear-gradient(90deg, var(--accent), var(--accent2)); transition: width .3s; border-radius: 2px; }
+.nav-links a:hover { color: var(--text); }
+.nav-links a:hover::after { width: 100%; }
+.nav-cta {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: var(--discord); color: #fff; text-decoration: none;
+    padding: 10px 20px; border-radius: 999px; font-size: 14px; font-weight: 600;
+    transition: transform .15s, box-shadow .2s;
+    box-shadow: 0 0 20px rgba(88,101,242,.35);
+}
+.nav-cta:hover { transform: translateY(-2px); box-shadow: 0 0 30px rgba(88,101,242,.55); }
+
+/* ================= HERO ================= */
+.hero { padding: 180px 0 100px; text-align: center; position: relative; }
+.hero-tag {
+    display: inline-flex; align-items: center; gap: 10px;
+    border: 1px solid var(--border); background: rgba(255,255,255,.04);
+    border-radius: 999px; padding: 8px 18px; font-size: 13px; color: var(--muted);
+    backdrop-filter: blur(8px); margin-bottom: 32px;
+    animation: heroUp .7s ease both;
+}
+.hero-tag .live { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 10px var(--accent); animation: pulse 1.8s infinite; }
+@keyframes pulse { 0%,100% {opacity:1} 50% {opacity:.3} }
+.hero h1 {
+    font-family: 'Unbounded', sans-serif;
+    font-size: clamp(38px, 7vw, 76px); font-weight: 900;
+    letter-spacing: -2px; line-height: 1.08;
+    animation: heroUp .7s .1s ease both;
+}
+.hero h1 .grad {
+    background: linear-gradient(100deg, var(--accent), var(--accent2) 45%, var(--accent3));
+    background-size: 220% 100%;
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+    animation: gradientShift 6s linear infinite, heroUp .7s .1s ease both;
+}
+@keyframes gradientShift { to { background-position: -220% 0 } }
+.hero .sub {
+    color: var(--muted); font-size: clamp(16px, 2.2vw, 19px);
+    max-width: 660px; margin: 26px auto 0; line-height: 1.65;
+    animation: heroUp .7s .2s ease both;
+}
+.hero .sub .accent { color: var(--accent); font-weight: 600; }
+@keyframes heroUp { from { opacity: 0; transform: translateY(30px) } to { opacity: 1; transform: none } }
+
+.hero-actions { margin-top: 44px; display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; animation: heroUp .7s .3s ease both; }
+
+.btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 10px;
+    border-radius: 999px; font-size: 15px; font-weight: 700;
+    padding: 16px 34px; text-decoration: none; cursor: pointer; border: none;
+    position: relative; overflow: hidden;
+    transition: transform .15s, box-shadow .25s;
+}
+.btn:active { transform: scale(.96); }
+.btn .shine { position: absolute; top: 0; left: -100%; width: 60%; height: 100%; background: linear-gradient(90deg, transparent, rgba(255,255,255,.35), transparent); transform: skewX(-20deg); }
+.btn:hover .shine { animation: shine .7s ease; }
+@keyframes shine { to { left: 160% } }
+.btn-discord { background: var(--discord); color: #fff; box-shadow: 0 8px 30px rgba(88,101,242,.4); }
+.btn-discord:hover { transform: translateY(-3px); box-shadow: 0 12px 44px rgba(88,101,242,.6); }
+.btn-accent { background: linear-gradient(90deg, var(--accent), var(--accent2)); color: #04110a; box-shadow: 0 8px 30px rgba(0,255,133,.3); }
+.btn-accent:hover { transform: translateY(-3px); box-shadow: 0 12px 44px rgba(0,255,133,.5); }
+.btn-ghost { background: rgba(255,255,255,.04); color: var(--text); border: 1px solid var(--border); }
+.btn-ghost:hover { transform: translateY(-3px); border-color: rgba(255,255,255,.2); }
+
+/* ================= STATS ================= */
+.stats { display: flex; justify-content: center; gap: 64px; margin-top: 80px; flex-wrap: wrap; animation: heroUp .7s .4s ease both; }
+.stat { text-align: center; position: relative; }
+.stat::after { content: ""; position: absolute; right: -32px; top: 15%; height: 70%; width: 1px; background: var(--border); }
+.stat:last-child::after { display: none; }
+.stat b { display: block; font-family: 'Unbounded', sans-serif; font-size: 32px; font-weight: 700; background: linear-gradient(90deg, var(--accent), var(--accent2)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.stat span { color: var(--muted); font-size: 13px; margin-top: 6px; display: block; }
+
+/* ================= SECTIONS ================= */
+section { padding: 100px 0; }
+.section-head { text-align: center; margin-bottom: 60px; }
+.section-head .kicker { color: var(--accent); font-size: 13px; font-weight: 700; letter-spacing: 3px; text-transform: uppercase; margin-bottom: 14px; }
+.section-head h2 { font-family: 'Unbounded', sans-serif; font-size: clamp(26px, 4vw, 40px); font-weight: 700; letter-spacing: -1px; }
+.section-head p { color: var(--muted); margin-top: 14px; }
+
+/* ================= FEATURES ================= */
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; }
+.feature {
+    position: relative;
+    background: linear-gradient(160deg, rgba(255,255,255,.05), rgba(255,255,255,.015));
+    border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 30px; overflow: hidden;
+    opacity: 0; transform: translateY(36px);
+    transition: transform .3s ease, border-color .3s ease, box-shadow .3s ease;
+}
+.feature.visible { opacity: 1; transform: translateY(0); transition: opacity .7s ease, transform .7s ease; }
+.feature::before {
+    content: ""; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+    background: linear-gradient(90deg, transparent, var(--accent), transparent);
+    opacity: 0; transition: opacity .3s;
+}
+.feature:hover { transform: translateY(-6px); border-color: rgba(0,255,133,.35); box-shadow: 0 24px 50px rgba(0,0,0,.45); }
+.feature:hover::before { opacity: 1; }
+.feature .icon {
+    width: 48px; height: 48px; border-radius: 13px; display: grid; place-items: center;
+    font-size: 22px; margin-bottom: 18px; position: relative;
+    background: linear-gradient(135deg, rgba(0,255,133,.15), rgba(0,212,255,.1));
+    transition: transform .3s;
+}
+.feature:hover .icon { transform: scale(1.1) rotate(-8deg); }
+.feature h3 { font-size: 17px; font-weight: 700; margin-bottom: 10px; }
+.feature p { color: var(--muted); font-size: 14px; line-height: 1.6; }
+
+/* ================= PRICING ================= */
+.pricing-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 24px; align-items: stretch; }
+.plan {
+    position: relative; border-radius: var(--radius); padding: 40px 34px;
+    display: flex; flex-direction: column;
+    background: linear-gradient(165deg, rgba(255,255,255,.06), rgba(255,255,255,.015));
+    border: 1px solid var(--border);
+    opacity: 0; transform: translateY(36px);
+    transition: transform .3s ease, border-color .3s ease, box-shadow .3s ease;
+}
+.plan.visible { opacity: 1; transform: translateY(0); transition: opacity .7s ease, transform .7s ease; }
+.plan:hover { transform: translateY(-6px); box-shadow: 0 28px 60px rgba(0,0,0,.5); }
+.plan.featured {
+    border-color: rgba(0,255,133,.45);
+    background: linear-gradient(165deg, rgba(0,255,133,.1), rgba(0,212,255,.04) 60%, rgba(255,255,255,.015));
+    box-shadow: 0 0 60px rgba(0,255,133,.12);
+}
+.plan .badge {
+    position: absolute; top: -14px; left: 50%; transform: translateX(-50%);
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    color: #04110a; font-size: 12px; font-weight: 800; letter-spacing: 1px;
+    padding: 6px 16px; border-radius: 999px; text-transform: uppercase;
+    box-shadow: 0 6px 20px rgba(0,255,133,.35); white-space: nowrap;
+}
+.plan h3 { font-size: 14px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); }
+.plan .price { margin: 18px 0 8px; display: flex; align-items: baseline; gap: 6px; }
+.plan .price b { font-family: 'Unbounded', sans-serif; font-size: 46px; font-weight: 900; letter-spacing: -2px; }
+.plan .price span { color: var(--muted); font-size: 15px; }
+.plan .period { color: var(--muted); font-size: 13px; margin-bottom: 24px; }
+.plan ul { list-style: none; margin-bottom: 30px; flex: 1; }
+.plan ul li { padding: 9px 0; font-size: 14px; display: flex; gap: 12px; align-items: flex-start; }
+.plan ul li::before { content: "✦"; color: var(--accent); font-weight: 700; flex-shrink: 0; }
+.plan .btn { width: 100%; }
+.plan.free .price b { background: linear-gradient(90deg, var(--muted), var(--text)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+
+/* ================= DISCORD CTA ================= */
+.discord-cta { text-align: center; }
+.cta-card {
+    position: relative; max-width: 720px; margin: 0 auto;
+    border-radius: 24px; padding: 60px 48px; overflow: hidden;
+    background: linear-gradient(160deg, rgba(88,101,242,.14), rgba(0,255,133,.06) 50%, rgba(0,212,255,.08));
+    border: 1px solid rgba(88,101,242,.3);
+    opacity: 0; transform: translateY(36px);
+}
+.cta-card.visible { opacity: 1; transform: translateY(0); transition: opacity .7s ease, transform .7s ease; }
+.cta-card::before {
+    content: ""; position: absolute; inset: -1px; border-radius: 24px;
+    padding: 1px; pointer-events: none;
+    background: linear-gradient(120deg, var(--discord), transparent 40%, transparent 60%, var(--accent));
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor; mask-composite: exclude;
+}
+.cta-icon { font-size: 56px; margin-bottom: 20px; display: inline-block; animation: floatIcon 3s ease-in-out infinite; }
+@keyframes floatIcon { 0%,100% { transform: translateY(0) } 50% { transform: translateY(-10px) } }
+.cta-card h2 { font-family: 'Unbounded', sans-serif; font-size: clamp(24px, 4vw, 34px); font-weight: 700; letter-spacing: -1px; margin-bottom: 16px; }
+.cta-card p { color: var(--muted); line-height: 1.7; margin-bottom: 34px; font-size: 15px; }
+.cta-card .btn { font-size: 16px; padding: 18px 42px; }
+
+/* ================= FAQ ================= */
+.faq { max-width: 760px; margin: 0 auto; }
+.faq details {
+    background: linear-gradient(160deg, rgba(255,255,255,.04), rgba(255,255,255,.01));
+    border: 1px solid var(--border); border-radius: 14px;
+    margin-bottom: 14px; padding: 22px 26px; cursor: pointer;
+    opacity: 0; transform: translateY(20px);
+    transition: opacity .5s ease, transform .5s ease, border-color .3s;
+}
+.faq details.visible { opacity: 1; transform: none; }
+.faq details[open] { border-color: rgba(0,255,133,.3); }
+.faq summary { font-weight: 600; font-size: 15px; list-style: none; display: flex; justify-content: space-between; align-items: center; gap: 16px; }
+.faq summary::-webkit-details-marker { display: none; }
+.faq summary::after { content: "+"; font-size: 22px; color: var(--accent); transition: transform .3s; flex-shrink: 0; }
+.faq details[open] summary::after { transform: rotate(45deg); }
+.faq details p { color: var(--muted); font-size: 14px; line-height: 1.7; margin-top: 14px; }
+
+/* ================= FOOTER ================= */
+footer { border-top: 1px solid var(--border); padding: 44px 0; }
+.footer-inner { display: flex; align-items: center; justify-content: space-between; gap: 20px; flex-wrap: wrap; }
+footer .copy { color: var(--muted); font-size: 13px; }
+footer a { color: var(--muted); text-decoration: none; font-size: 13px; transition: color .2s; }
+footer a:hover { color: var(--accent); }
+.footer-social { display: flex; gap: 18px; }
+
+/* ================= RESPONSIVE ================= */
+@media (max-width: 720px) {
+    .nav-links { display: none; }
+    .hero { padding: 140px 0 70px; }
+    .stats { gap: 40px; }
+    .stat::after { display: none; }
+    .cta-card { padding: 44px 26px; }
+}
+</style>
+</head>
+<body>
+
+<div class="bg">
+    <div class="grid-overlay"></div>
+    <div class="orb o1"></div>
+    <div class="orb o2"></div>
+    <div class="orb o3"></div>
+</div>
+
+<nav>
+    <div class="container nav-inner">
+        <a href="#" class="logo">
+            <div class="logo-mark">m</div>
+            <div class="logo-name">missmat <span>dev</span></div>
+        </a>
+        <div class="nav-links">
+            <a href="#features">Возможности</a>
+            <a href="#pricing">Подписка</a>
+            <a href="#faq">FAQ</a>
+            <a href="https://www.youtube.com/@mendix1337" target="_blank" rel="noopener">YouTube</a>
+        </div>
+        <a href="register.html" class="nav-cta" style="background:linear-gradient(90deg,var(--accent),var(--accent2));color:#04110a;box-shadow:0 0 20px rgba(0,255,133,.35)">Регистрация</a>
+        <a href="https://discord.gg/BdUWVu4qHb" target="_blank" rel="noopener" class="nav-cta">💬 Discord</a>
+    </div>
+</nav>
+
+<header class="hero">
+    <div class="container">
+        <div class="hero-tag"><span class="live"></span> никогда · Lua · missmat dev</div>
+        <h1>Ваш идеальный <span class="grad">Lua</span>-скрипт</h1>
+        <p class="sub">
+            Треш-ток, AI-пик, пресеты анти-аима, билдер, ватермарк и десятки функций —
+            с авто-лицензией по МСК. Минималистичное меню, максимальная эффективность.
+        </p>
+        <div class="hero-actions">
+            <a href="https://discord.gg/BdUWVu4qHb" target="_blank" rel="noopener" class="btn btn-discord"><span class="shine"></span>💬 Купить в Discord</a>
+            <a href="#features" class="btn btn-ghost">Смотреть функции</a>
+        </div>
+
+        <div class="stats">
+            <div class="stat"><b data-count="25">0</b><span>+ функций</span></div>
+            <div class="stat"><b data-count="3">0</b><span>стиля ватермарка</span></div>
+            <div class="stat"><b data-count="24">0</b><span>/7 обновления</span></div>
+        </div>
+    </div>
+</header>
+
+<section id="features">
+    <div class="container">
+        <div class="section-head">
+            <div class="kicker">Features</div>
+            <h2>Что внутри</h2>
+            <p>Всё, что нужно для комфортной игры — из коробки</p>
+        </div>
+        <div class="grid">
+            <div class="feature"><div class="icon">💬</div><h3>Trash Talk</h3><p>Обзывания при килле и смерти + реклама вашего YouTube канала в каждом сообщении.</p></div>
+            <div class="feature"><div class="icon">🎯</div><h3>AI Pick</h3><p>Авто-пик цели, авто-peek, додж от выстрелов и kill-react — всё настраивается.</p></div>
+            <div class="feature"><div class="icon">🧩</div><h3>Пресеты AA</h3><p>Delay Jitter и fast jitter из коробки. Система сетов символами (export/import).</p></div>
+            <div class="feature"><div class="icon">🛠️</div><h3>Билдер анти-аима</h3><p>11 состояний × 2 команды, yaw/body/limit билдер с variability и delay.</p></div>
+            <div class="feature"><div class="icon">💧</div><h3>Watermark</h3><p>3 стиля (Classic / Luasync / Star) с drag & drop и снап-точками.</p></div>
+            <div class="feature"><div class="icon">⚡</div><h3>Экстры</h3><p>Slow motion, avoid backstab, freestanding, хитмаркеры, индикаторы, clan tag спаммер.</p></div>
+        </div>
+    </div>
+</section>
+
+<section id="pricing">
+    <div class="container">
+        <div class="section-head">
+            <div class="kicker">Pricing</div>
+            <h2>Подписка</h2>
+            <p>От бесплатного триала до года — выбирай свой план</p>
+        </div>
+
+        <div class="pricing-grid">
+            <div class="plan free">
+                <h3>Триал</h3>
+                <div class="price"><b>0₽</b></div>
+                <div class="period">1 день · бесплатно</div>
+                <ul>
+                    <li>Полный доступ ко всем функциям</li>
+                    <li>Обе версии скрипта</li>
+                    <li>Все пресеты AA</li>
+                    <li>Поддержка в Discord</li>
+                </ul>
+                <a href="https://discord.gg/BdUWVu4qHb" target="_blank" rel="noopener" class="btn btn-ghost">Получить бесплатно</a>
+            </div>
+
+            <div class="plan featured">
+                <div class="badge">Хит</div>
+                <h3>Месяц</h3>
+                <div class="price"><b>149₽</b><span>/ мес</span></div>
+                <div class="period">30 дней подписки</div>
+                <ul>
+                    <li>Полный доступ ко всем функциям</li>
+                    <li>Обе версии скрипта</li>
+                    <li>Все пресеты AA</li>
+                    <li>Быстрая поддержка</li>
+                    <li>Обновления 24/7</li>
+                </ul>
+                <a href="https://discord.gg/BdUWVu4qHb" target="_blank" rel="noopener" class="btn btn-accent"><span class="shine"></span>Купить за 149₽</a>
+            </div>
+
+            <div class="plan">
+                <h3>Год</h3>
+                <div class="price"><b>999₽</b><span>/ год</span></div>
+                <div class="period">365 дней · выгода ~45%</div>
+                <ul>
+                    <li>Полный доступ ко всем функциям</li>
+                    <li>Обе версии скрипта</li>
+                    <li>Все пресеты AA</li>
+                    <li>Приоритетная поддержка</li>
+                    <li>Обновления 24/7</li>
+                    <li>Доступ к бета-версиям</li>
+                </ul>
+                <a href="https://discord.gg/BdUWVu4qHb" target="_blank" rel="noopener" class="btn btn-ghost">Купить за 999₽</a>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section id="get" class="discord-cta">
+    <div class="container">
+        <div class="cta-card">
+            <div class="cta-icon">💬</div>
+            <h2>Покупка и поддержка — в Discord</h2>
+            <p>
+                Заходи на наш сервер: там выдача триалов, оплата подписок, ключи с авто-лицензией по МСК,
+                помощь с настройкой и обновления. Пиши в нужный канал — и мы на связи.
+            </p>
+            <a href="https://discord.gg/BdUWVu4qHb" target="_blank" rel="noopener" class="btn btn-discord"><span class="shine"></span>Перейти в Discord</a>
+        </div>
+    </div>
+</section>
+
+<section id="faq">
+    <div class="container">
+        <div class="section-head">
+            <div class="kicker">FAQ</div>
+            <h2>Частые вопросы</h2>
+        </div>
+        <div class="faq">
+            <details open>
+                <summary>Как работает авто-лицензия?</summary>
+                <p>В скрипт вшит срок действия по МСК (UTC+3). Как только время истекает — скрипт не загружается и пишет об этом в консоль. Продлите подписку — получите новый код.</p>
+            </details>
+            <details>
+                <summary>Как купить подписку?</summary>
+                <p>Заходите на наш Discord сервер, выбираете нужный план (месяц или год), оплачиваете — и получаете персональный код активации с датой окончания.</p>
+            </details>
+            <details>
+                <summary>Можно ли попробовать бесплатно?</summary>
+                <p>Да — бесплатный триал на 1 день выдаётся в Discord по запросу. Напишите в канал триалов и получите ключ.</p>
+            </details>
+            <details>
+                <summary>Что входит в «обе версии»?</summary>
+                <p>Читаемая версия (можно редактировать под себя) и обфусцированная — авто-лицензия встроена в обе.</p>
+            </details>
+        </div>
+    </div>
+</section>
+
+<footer>
+    <div class="container footer-inner">
+        <div class="copy">© 2026 missmat · made by <a href="https://www.youtube.com/@mendix1337" target="_blank" rel="noopener">mendix1337</a></div>
+        <div class="footer-social">
+            <a href="login.html">Вход</a>
+            <a href="admin.html" style="opacity:.4" title="для админа">⚙</a>
+            <a href="https://discord.gg/BdUWVu4qHb" target="_blank" rel="noopener">Discord</a>
+            <a href="https://www.youtube.com/@mendix1337" target="_blank" rel="noopener">YouTube</a>
+        </div>
+    </div>
+</footer>
+
+<script>
+// ---------- reveal on scroll ----------
+const io = new IntersectionObserver(entries => {
+    entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); io.unobserve(e.target); } });
+}, { threshold: 0.12 });
+document.querySelectorAll('.feature, .plan, .cta-card, .faq details').forEach(el => io.observe(el));
+
+// ---------- animated counters ----------
+const cio = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+        if (!e.isIntersecting) return;
+        const t = e.target, end = +t.dataset.count, dur = 1300, start = performance.now();
+        (function tick(now) {
+            const p = Math.min((now - start) / dur, 1);
+            t.textContent = Math.floor(end * (1 - Math.pow(1 - p, 3)));
+            if (p < 1) requestAnimationFrame(tick); else t.textContent = end;
+        })(start);
+        cio.unobserve(t);
+    });
+}, { threshold: 0.5 });
+document.querySelectorAll('.stat b[data-count]').forEach(el => cio.observe(el));
+
+// ---------- nav scroll shadow ----------
+const nav = document.querySelector('nav');
+addEventListener('scroll', () => {
+    nav.style.boxShadow = scrollY > 40 ? '0 8px 30px rgba(0,0,0,.3)' : 'none';
+});
+</script>
+
+</body>
+</html>

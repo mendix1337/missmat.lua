@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Кабинет — missmat</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700;900&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root { --bg:#06080b; --card:#10161d; --border:rgba(255,255,255,.08); --text:#eef3f7; --muted:#8a97a5; --accent:#00ff85; --accent2:#00d4ff; --discord:#5865f2; --danger:#ff5d7a; }
+* { margin:0; padding:0; box-sizing:border-box; }
+body { background:var(--bg); color:var(--text); min-height:100vh; font-family:'Inter',system-ui,sans-serif; padding:40px 20px; position:relative; }
+body::before { content:""; position:fixed; inset:0; z-index:-1; background:radial-gradient(ellipse 70% 50% at 50% -10%,rgba(0,255,133,.12),transparent),radial-gradient(ellipse 50% 40% at 100% 110%,rgba(0,212,255,.08),transparent); }
+.wrap { max-width:720px; margin:0 auto; }
+.card { background:linear-gradient(165deg,rgba(255,255,255,.05),rgba(255,255,255,.015)); border:1px solid var(--border); border-radius:20px; padding:36px; box-shadow:0 25px 70px rgba(0,0,0,.5); margin-bottom:20px; animation:up .6s ease both; }
+@keyframes up { from{opacity:0;transform:translateY(24px)} to{opacity:1;transform:none} }
+.top { display:flex; align-items:center; justify-content:space-between; gap:16px; margin-bottom:26px; flex-wrap:wrap; }
+.logo { display:flex; align-items:center; gap:12px; text-decoration:none; color:var(--text); }
+.logo-mark { width:40px; height:40px; border-radius:12px; display:grid; place-items:center; font-weight:900; font-family:'Unbounded',sans-serif; background:linear-gradient(135deg,var(--accent),var(--accent2)); color:#04110a; box-shadow:0 0 24px rgba(0,255,133,.35); }
+.logo-name { font-family:'Unbounded',sans-serif; font-weight:700; font-size:17px; }
+h1 { font-family:'Unbounded',sans-serif; font-size:24px; font-weight:700; }
+.user-chip { color:var(--muted); font-size:14px; }
+.user-chip b { color:var(--accent); }
+.alertbox { border-radius:12px; padding:14px 16px; font-size:13.5px; margin-bottom:20px; }
+.bban { background:rgba(255,93,122,.12); border:1px solid rgba(255,93,122,.35); color:#ff9db1; }
+.bmut { background:rgba(255,201,77,.1); border:1px solid rgba(255,201,77,.4); color:#ffda7d; }
+.row { display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-top:18px; }
+.field { background:rgba(255,255,255,.03); border:1px solid var(--border); border-radius:12px; padding:14px 16px; }
+.field span { display:block; font-size:12px; color:var(--muted); margin-bottom:5px; }
+.field b { font-size:15px; }
+.license { background:rgba(0,255,133,.05); border:1px solid rgba(0,255,133,.3); border-radius:12px; padding:16px; margin-top:18px; font-family:monospace; font-size:14px; word-break:break-all; position:relative; }
+.license .tag { position:absolute; top:-11px; left:16px; background:var(--accent); color:#04110a; font-size:11px; font-weight:700; padding:3px 10px; border-radius:999px; }
+.license button { float:right; background:none; border:1px solid var(--border); color:var(--muted); border-radius:8px; padding:4px 10px; font-size:12px; cursor:pointer; font-family:inherit; }
+.license button:hover { color:var(--text); border-color:var(--accent); }
+.btn { display:inline-flex; align-items:center; justify-content:center; gap:8px; border:none; cursor:pointer; border-radius:12px; padding:13px 22px; font-size:14px; font-weight:700; text-decoration:none; transition:transform .15s,box-shadow .2s; }
+.btn-discord { background:var(--discord); color:#fff; box-shadow:0 6px 20px rgba(88,101,242,.35); }
+.btn-discord:hover { transform:translateY(-2px); box-shadow:0 10px 30px rgba(88,101,242,.5); }
+.btn-outline { background:transparent; color:var(--muted); border:1px solid var(--border); }
+.btn-outline:hover { color:var(--text); border-color:rgba(255,255,255,.25); }
+.actions { display:flex; gap:12px; margin-top:22px; flex-wrap:wrap; }
+.note { color:var(--muted); font-size:13px; margin-top:14px; line-height:1.6; }
+.howto { margin-top:18px; color:var(--muted); font-size:13.5px; line-height:1.8; }
+.howto code { background:rgba(255,255,255,.07); padding:2px 7px; border-radius:6px; font-size:12.5px; color:var(--accent); }
+.statuspill { display:inline-flex; align-items:center; gap:8px; font-size:13px; padding:6px 14px; border-radius:999px; }
+.sp-active { background:rgba(0,255,133,.12); color:#7dffbe; border:1px solid rgba(0,255,133,.3); }
+.sp-expired { background:rgba(255,93,122,.12); color:#ff9db1; border:1px solid rgba(255,93,122,.35); }
+.keyform { display:flex; gap:10px; margin-top:18px; }
+.keyform input { flex:1; background:rgba(255,255,255,.04); color:var(--text); border:1px solid var(--border); border-radius:12px; padding:13px 16px; font-size:14px; font-family:monospace; outline:none; }
+.keyform input:focus { border-color:var(--accent); }
+.keyform button { background:var(--accent); color:#04110a; border:none; border-radius:12px; padding:0 22px; font-weight:700; cursor:pointer; }
+.mt { margin-top:8px; }
+</style>
+</head>
+<body>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase-config.js"></script>
+<script src="missmat-core.js"></script>
+
+<div class="wrap">
+    <div class="card" id="card">
+        <div class="top">
+            <a class="logo" href="index.html"><div class="logo-mark">m</div><div class="logo-name">missmat</div></a>
+            <div class="user-chip" id="chip"></div>
+        </div>
+
+        <div id="banners"></div>
+
+        <h1>Личный кабинет</h1>
+        <div id="body"></div>
+
+        <div class="actions">
+            <a class="btn btn-discord" href="https://discord.gg/BdUWVu4qHb" target="_blank" rel="noopener">💬 Оплатить / продлить</a>
+            <button class="btn btn-outline" id="logout">Выйти</button>
+        </div>
+    </div>
+</div>
+
+<script>
+async function main() {
+    const username = redirectIfNotLogged();
+    const client = await sb();
+
+    const { data: me, error: meErr } = await client
+        .from('profiles')
+        .select('*')
+        .eq('username', username)
+        .single();
+    if (meErr || !me) { localStorage.removeItem('mm_session'); location.href = 'login.html'; return; }
+
+    if (me.is_admin === 1) { location.href = 'admin.html'; return; }
+
+    document.getElementById('chip').innerHTML = 'Вы вошли как <b>' + me.username + '</b>';
+
+    const banners = document.getElementById('banners');
+    if (me.banned === 1) {
+        banners.innerHTML = '<div class="alertbox bban"><b>Аккаунт заблокирован.</b> Обратитесь в <a href="https://discord.gg/BdUWVu4qHb" target="_blank" style="color:#7d9bff">Discord</a>.</div>';
+    } else if (me.muted === 1) {
+        banners.innerHTML = '<div class="alertbox bmut"><b>Аккаунт muted.</b> Обратитесь в <a href="https://discord.gg/BdUWVu4qHb" target="_blank" style="color:#7d9bff">Discord</a>.</div>';
+    }
+
+    const end = Number(me.license_end || 0);
+    const active = end > mscNow();
+
+    let statusHtml = end > 0
+        ? (active
+            ? '<span class="statuspill sp-active">Активна · осталось ' + Math.max(Math.floor((end - mscNow()) / 86400), 0) + ' дн.</span>'
+            : '<span class="statuspill sp-expired">Истекла</span>')
+        : '<span class="statuspill sp-expired">Нет лицензии</span>';
+
+    let licenseHtml = '';
+    if (end > 0) {
+        licenseHtml =
+            '<div class="license"><span class="tag">LICENSE_END_UTC</span>' + end +
+            '<button onclick="copyCode(' + end + ')">копировать</button></div>' +
+            '<p class="note">Вставьте это число в луа-скрипт вместо <code>LICENSE_END_UTC = 0</code>.</p>';
+    } else {
+        licenseHtml = '<p class="note mt">Лицензия ещё не выдана. Введите ключ активации (полученный в Discord) или напишите нам для покупки.</p>' +
+            '<div class="keyform"><input type="text" id="key-input" placeholder="XXXXX-XXXXX-XXXXX" autocomplete="off"><button onclick="activateKey()">Активировать</button></div>' +
+            '<div class="alertbox" id="key-msg" style="display:none;margin-top:12px"></div>';
+    }
+
+    document.getElementById('body').innerHTML =
+        '<div class="row">' +
+        '<div class="field"><span>Дата регистрации</span><b>' + (me.created_at || '—') + '</b></div>' +
+        '<div class="field"><span>Ключ</span><b>' + (me.license_key || '—') + '</b></div>' +
+        '</div>' +
+        '<div class="row">' +
+        '<div class="field"><span>Статус лицензии</span><br><span class="mt">' + statusHtml + '</span></div>' +
+        '<div class="field"><span>Никнейм</span><b>' + me.username + '</b></div>' +
+        '</div>' +
+        licenseHtml +
+        '<div class="howto"><b>Как активировать:</b><br>' +
+        '1. Откройте <code>missmat.lua</code><br>' +
+        '2. Найдите строку <code>LICENSE_END_UTC = 0</code><br>' +
+        '3. Замените <code>0</code> на число из блока выше<br>' +
+        '4. Загрузите в никогда — истечение по МСК сработает автоматически</div>';
+
+    window.activateKey = async function () {
+        const input = document.getElementById('key-input');
+        const msg = document.getElementById('key-msg');
+        const code = (input.value || '').trim().toUpperCase();
+        msg.style.display = 'block';
+
+        if (!/^[A-Z0-9]{5}-[A-Z0-9]{5}-[A-Z0-9]{5}$/.test(code)) {
+            msg.className = 'alertbox bban'; msg.textContent = 'Неверный формат ключа.';
+            return;
+        }
+
+        const { data: k, error: kErr } = await client
+            .from('license_keys')
+            .select('*')
+            .eq('key', code)
+            .single();
+        if (kErr || !k) { msg.className = 'alertbox bban'; msg.textContent = 'Ключ не найден. Проверьте и попробуйте ещё раз.'; return; }
+        if (k.used_by && k.used_by !== '') { msg.className = 'alertbox bban'; msg.textContent = 'Этот ключ уже использован.'; return; }
+
+        const oldEnd = end;
+        const newEnd = Math.max(mscNow(), oldEnd) + k.days * 86400;
+
+        const { error: upErr } = await client
+            .from('profiles')
+            .update({ license_end: newEnd, license_key: code })
+            .eq('username', me.username);
+        if (upErr) { msg.className = 'alertbox bban'; msg.textContent = 'Ошибка активации.'; return; }
+
+        await client.from('license_keys').update({ used_by: me.username, used_at: new Date().toISOString() }).eq('key', code);
+
+        msg.className = 'alertbox'; msg.style.background = 'rgba(0,255,133,.1)';
+        msg.style.border = '1px solid rgba(0,255,133,.35)'; msg.style.color = '#7dffbe';
+        msg.textContent = '✅ Ключ активирован: +' + k.days + ' дн. Обновляем кабинет…';
+        setTimeout(() => location.reload(), 900);
+    };
+}
+
+window.copyCode = function (n) {
+    navigator.clipboard.writeText(String(n)).then(() => {
+        const btn = event.target; btn.textContent = '✓'; setTimeout(() => btn.textContent = 'копировать', 1500);
+    });
+};
+
+document.getElementById('logout').addEventListener('click', () => {
+    localStorage.removeItem('mm_session');
+    location.href = 'index.html';
+});
+
+main();
+</script>
+</body>
+</html>
