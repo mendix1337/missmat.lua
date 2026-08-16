@@ -1,17 +1,20 @@
 // ============================================================
 //  missmat — конфиг Supabase
-//  После создания проекта вставь свои данные:
-//   1) Supabase Dashboard -> ваш проект -> Settings -> API
-//   2) Project URL  -> в SUPABASE_URL
-//   3) anon public key -> в SUPABASE_ANON_KEY
-//  (Anonymous key безопасно хранить в клиенте)
+//
+//  Где взять данные (новый интерфейс Supabase):
+//    В правом верхнем углу панели проекта нажмите "Connect"
+//    -> App Frameworks / API Keys:
+//
+//    1) Project URL -> в SUPABASE_URL
+//       (вид: https://XXXXXXX.supabase.co)
+//
+//    2) NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY -> в SUPABASE_ANON_KEY
+//       Это тот же клиентский ключ (раньше назывался "anon public").
+//       Начинается с "eyJ". Его можно хранить в клиенте.
 // ============================================================
 
-const SUPABASE_URL = "https://ЗАМЕНИТЕ.supabase.co";
-const SUPABASE_ANON_KEY = "eyJЗАМЕНИТЕ";
+const SUPABASE_URL = "qfnjaajrzcduhnonwxft.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_TB6No8Qk4-jOWB7dPbP7KA_Aba7xmd_";
 
-// Админ-аккаунт (это ник, под которым заходишь в админку)
+// Админ-аккаунт (ник, под которым заходишь в админку)
 const ADMIN_USER = "mendix1337";
-// Пароль админа НЕ храним в клиенте:
-// в login.html пароль сверяется с записью profiles (password_hash),
-// а запись админа создаётся скриптом admin-seed (см. README).

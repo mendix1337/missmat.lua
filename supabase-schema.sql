@@ -44,12 +44,28 @@ CREATE TABLE IF NOT EXISTS public.license_keys (
 CREATE INDEX IF NOT EXISTS idx_profiles_license ON public.profiles (license_end);
 CREATE INDEX IF NOT EXISTS idx_keys_used ON public.license_keys (used_by);
 
+-- Дополнить старые таблицы недостающими колонками (если запускаешь повторно)
+DO $$
+BEGIN
+    BEGIN ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS license_key TEXT DEFAULT ''; EXCEPTION WHEN duplicate_column THEN NULL; END;
+    BEGIN ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS is_admin INTEGER NOT NULL DEFAULT 0; EXCEPTION WHEN duplicate_column THEN NULL; END;
+    BEGIN ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS banned INTEGER NOT NULL DEFAULT 0; EXCEPTION WHEN duplicate_column THEN NULL; END;
+    BEGIN ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS muted INTEGER NOT NULL DEFAULT 0; EXCEPTION WHEN duplicate_column THEN NULL; END;
+END $$;
+
 -- ---- RLS (политики) ----
 -- ВАЖНО: для простоты статичной версии политики открытые.
 -- Для продакшена: перенесите проверки на Edge Functions / RPC.
+-- Схему можно запускать повторно: политики и таблицы
+-- пересоздаются без ошибок (IF NOT EXISTS / DROP IF EXISTS).
+
 ALTER TABLE public.profiles      ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.registrations ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.license_keys  ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "profiles_public_all"      ON public.profiles;
+DROP POLICY IF EXISTS "registrations_public_all" ON public.registrations;
+DROP POLICY IF EXISTS "license_keys_public_all"  ON public.license_keys;
 
 CREATE POLICY "profiles_public_all"      ON public.profiles      FOR ALL      USING (true) WITH CHECK (true);
 CREATE POLICY "registrations_public_all" ON public.registrations FOR ALL      USING (true) WITH CHECK (true);
